@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulado APH - Bombeiro de Aeródromo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .timer {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #e94560;
+            margin-bottom: 20px;
+        }
+        .question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+        .option {
+            background: #f0f0f0;
+            padding: 12px 16px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option:hover { background: #e0e0e0; }
+        .option.selected {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .btn:hover { background: #c62a4a; }
+        h2 { text-align: center; margin-bottom: 20px; }
+        p { text-align: center; font-size: 20px; margin: 20px 0; }
+        .result-acertos { color: #e94560; font-size: 32px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="timer">⏱️ Tempo: <span id="timer">10:00</span></div>
+        <div class="question" id="question"></div>
+        <div id="options"></div>
+        <button class="btn" id="nextBtn">➜ Próxima questão</button>
+    </div>
+
+    <script>
+        // ============================================
+        // TODAS AS 50 PERGUNTAS
+        // ============================================
+        const questions = [
+          {
+            q: "De acordo com a apostila, qual a primeira atitude a ser tomada no local de um acidente?",
+            options: [
+              "Iniciar imediatamente a RCP",
+              "Avaliar os riscos que possam colocar em perigo o socorrista",
+              "Imobilizar a coluna cervical da vítima",
+              "Verificar o nível de consciência da vítima"
+            ],
+            answer: 1
+          },
+          {
+            q: "O que significa a sigla XABCDE no contexto do exame primário de trauma?",
+            options: [
+              "eXame, Airway, Breathing, Circulation, Disability, Exposure",
+              "Hemorragia eXsanguinolenta, Vias Aéreas, Respiração, Circulação, Estado Neurológico, Exposição",
+              "eXame primário, Avaliação, Respiração, Circulação, Diagnóstico, Emergência",
+              "Hemorragia externa, Acesso venoso, Respiração, Circulação, Desfibrilação, Exame físico"
+            ],
+            answer: 1
+          },
+          {
+            q: "Qual a principal causa de obstrução de vias aéreas em vítimas de trauma?",
+            options: [
+              "Corpo estranho (OVACE)",
+              "Trauma direto na laringe",
+              "Inconsciência (relaxamento da língua)",
+              "Queimaduras inalatórias"
+            ],
+            answer: 2
+          },
+          {
+            q: "Na avaliação do nível de consciência pelo método AVDI, o que significa a letra 'V'?",
+            options: [
+              "Verbal - responde a estímulos verbais",
+              "Visual - acompanha com os olhos",
+              "Vital - apresenta sinais vitais",
+              "Vômito - risco de broncoaspiração"
+            ],
+            answer: 0
+          },
+          {
+            q: "Qual a profundidade recomendada para as compressões torácicas em adulto?",
+            options: ["2 a 3 cm", "4 a 5 cm", "5 a 6 cm", "7 a 8 cm"],
+            answer: 2
+          },
+          {
+            q: "Para que serve o curativo de três pontos em ferimento torácico?",
+            options: [
+              "Impedir entrada de ar e permitir saída",
+              "Estancar hemorragia externa",
+              "Proteger contra corpos estranhos",
+              "Imobilizar fraturas de costela"
+            ],
+            answer: 0
+          },
+          {
+            q: "Qual o método mais rápido para controle de hemorragia externa?",
+            options: [
+              "Torniquete",
+              "Pressão digital sobre ponto de pulso",
+              "Elevação do membro",
+              "Pressão direta sobre a ferida"
+            ],
+            answer: 3
+          },
+          {
+            q: "O que significa 'Golden Hour' no trauma?",
+            options: [
+              "Tempo ideal para triagem",
+              "Até 60 minutos para atendimento definitivo",
+              "Janela para usar o DEA",
+              "Tempo máximo para chegar ao local"
+            ],
+            answer: 1
+          },
+          {
+            q: "Sobre o uso do DEA, qual alternativa é correta?",
+            options: [
+              "Indicado para assistolia",
+              "Após o choque, reavaliar pulso imediatamente",
+              "Indicado para ritmo chocável (FV/TV)",
+              "Não pode ser usado em crianças"
+            ],
+            answer: 2
+          },
+          {
+            q: "Queimadura que atinge toda a espessura da pele, com aspecto de couro?",
+            options: ["Primeiro grau", "Segundo grau", "Terceiro grau", "Quarto grau"],
+            answer: 2
+          },
+          {
+            q: "Relação compressão-ventilação para RCP em adulto por um socorrista?",
+            options: ["15:2", "30:2", "15:1", "30:1"],
+            answer: 1
+          },
+          {
+            q: "Primeira ação ao chegar em cena com múltiplas vítimas (START)?",
+            options: [
+              "Iniciar RCP na vítima mais próxima",
+              "Ordenar que vítimas que andam vão para área segura",
+              "Imobilizar todas na prancha",
+              "Aplicar DEA em todos inconscientes"
+            ],
+            answer: 1
+          },
+          {
+            q: "Função da manobra de tração da mandíbula no trauma?",
+            options: [
+              "Abrir via aérea sem movimentar coluna cervical",
+              "Imobilizar fratura de mandíbula",
+              "Verificar reação pupilar",
+              "Avaliar força da mordida"
+            ],
+            answer: 0
+          },
+          {
+            q: "Sinal esperado no choque hipovolêmico?",
+            options: [
+              "Pele quente e seca",
+              "Bradicardia",
+              "Pele fria, pálida e úmida",
+              "Pressão arterial elevada"
+            ],
+            answer: 2
+          },
+          {
+            q: "Conduta que NÃO deve ser feita em fratura exposta?",
+            options: [
+              "Controlar sangramento",
+              "Reintroduzir o osso exposto",
+              "Proteger com curativo estéril",
+              "Imobilizar na posição encontrada"
+            ],
+            answer: 1
+          },
+          {
+            q: "Conduta correta com objeto encravado no tórax?",
+            options: [
+              "Remover imediatamente",
+              "Cortar rente à pele",
+              "Estabilizar e não remover",
+              "Aplicar pressão direta sobre o objeto"
+            ],
+            answer: 2
+          },
+          {
+            q: "Frequência de compressões torácicas na RCP de alta qualidade?",
+            options: ["60-80/min", "80-100/min", "100-120/min", "120-140/min"],
+            answer: 2
+          },
+          {
+            q: "O que significa a sigla SAMPLE?",
+            options: [
+              "Sinais, Aparência, Medicação, Plano, Lesões, Evento",
+              "Sintomas, Alergia, Medicação, Passado médico, Líquido/alimentos, Evento",
+              "Sangramento, Acesso, Manobras, Pressão, Lesão, Estabilização",
+              "Saturação, Avaliação, Movimento, Pulso, Locomoção, Estado mental"
+            ],
+            answer: 1
+          },
+          {
+            q: "Por que dois socorristas para remover capacete?",
+            options: [
+              "Capacete é pesado",
+              "Um estabiliza cabeça/pescoço enquanto outro remove",
+              "Testar força da coluna",
+              "Exigência legal"
+            ],
+            answer: 1
+          },
+          {
+            q: "O que define 'Morte Clínica'?",
+            options: [
+              "Morte das células encefálicas",
+              "Parada cardiorrespiratória (reversível com RCP)",
+              "Estado de decomposição",
+              "Rigor mortis estabelecido"
+            ],
+            answer: 1
+          },
+          {
+            q: "Conduta em queimadura química por pó (cal viva)?",
+            options: [
+              "Lavar com água imediatamente",
+              "Aplicar gelo",
+              "Escovar excesso de pó antes de lavar",
+              "Aplicar pomada antibiótica"
+            ],
+            answer: 2
+          },
+          {
+            q: "O que é cavitação na cinemática do trauma?",
+            options: [
+              "Formação de cavidade nos tecidos pela energia do impacto",
+              "Processo de cicatrização de fratura",
+              "Técnica para remover hematomas",
+              "Abertura espontânea das vias aéreas"
+            ],
+            answer: 0
+          },
+          {
+            q: "Conduta em amputação traumática de membro?",
+            options: [
+              "Aplicar torniquete sempre",
+              "Controlar hemorragia, localizar segmento e resfriar (sem contato direto com gelo)",
+              "Ignorar o membro amputado",
+              "Lavar o membro com água corrente"
+            ],
+            answer: 1
+          },
+          {
+            q: "Transporte de gestante politraumatizada?",
+            options: [
+              "Decúbito dorsal horizontal",
+              "Decúbito lateral esquerdo após imobilização",
+              "Sentada",
+              "Não há recomendação"
+            ],
+            answer: 1
+          },
+          {
+            q: "Socorrista pode ser processado por 'negligência' se:",
+            options: [
+              "Dirigir acima da velocidade",
+              "Atender sem conhecimento técnico",
+              "Deixar de usar EPI",
+              "Transportar para hospital errado"
+            ],
+            answer: 2
+          },
+          {
+            q: "Primeira prioridade no XABCDE?",
+            options: [
+              "A - Vias aéreas",
+              "B - Respiração",
+              "X - Hemorragia exsanguinolente",
+              "C - Circulação"
+            ],
+            answer: 2
+          },
+          {
+            q: "O que significa RMC?",
+            options: [
+              "Reanimação Miotorácica Controlada",
+              "Restrição de Movimento da Coluna Vertebral",
+              "Respiração Mecânica Controlada",
+              "Remoção Manual da Coluna"
+            ],
+            answer: 1
+          },
+          {
+            q: "Conduta em sangramento nasal (epistaxe)?",
+            options: [
+              "Inclinar cabeça para trás",
+              "Pinçar narinas com vítima sentada e cabeça neutra",
+              "Deitar de lado",
+              "Introduzir gaze no nariz"
+            ],
+            answer: 1
+          },
+          {
+            q: "Conduta em evisceração abdominal?",
+            options: [
+              "Lavar vísceras com soro",
+              "Recolocar vísceras",
+              "Cobrir com plástico estéril ou compressa úmida",
+              "Aplicar pressão direta"
+            ],
+            answer: 2
+          },
+          {
+            q: "Quantos ciclos de RCP antes de reavaliar com DEA?",
+            options: ["1 ciclo (30 segundos)", "3 ciclos (1 minuto)", "5 ciclos (2 minutos)", "10 ciclos (4 minutos)"],
+            answer: 2
+          },
+          {
+            q: "Como remover roupas de vítima de trauma?",
+            options: [
+              "Manter roupas íntimas sempre",
+              "Evitar cortar para não danificar provas",
+              "Remover apenas o necessário, respeitando pudor",
+              "Despir completamente sempre"
+            ],
+            answer: 2
+          },
+          {
+            q: "Diferença entre Socorrista e Bombeiro de Aeródromo Resgatista?",
+            options: [
+              "Não há diferença",
+              "Bombeiro tem atribuições específicas de resgate e combate a incêndio",
+              "Socorrista pode prescrever medicamentos",
+              "Bombeiro não pode aplicar primeiros socorros"
+            ],
+            answer: 1
+          },
+          {
+            q: "Pela regra dos nove, um membro superior corresponde a quantos %?",
+            options: ["9%", "18%", "4.5%", "1%"],
+            answer: 0
+          },
+          {
+            q: "O que caracteriza Ortopnéia?",
+            options: [
+              "Ritmo cardíaco lento",
+              "Dificuldade para respirar deitado, melhora ao sentar",
+              "Dor de cabeça intensa",
+              "Aumento da frequência respiratória"
+            ],
+            answer: 1
+          },
+          {
+            q: "Manobra inicial para OVACE em adulto consciente?",
+            options: [
+              "Compressões torácicas",
+              "Manobra de Heimlich",
+              "Abertura de via aérea",
+              "Verificar pulso"
+            ],
+            answer: 1
+          },
+          {
+            q: "Função da epiglote?",
+            options: [
+              "Equilíbrio do corpo",
+              "Proteger vias aéreas inferiores durante deglutição",
+              "Músculo respiratório acessório",
+              "Vaso sanguíneo"
+            ],
+            answer: 1
+          },
+          {
+            q: "Conduta para vítima inconsciente, sem respiração, mas com pulso?",
+            options: [
+              "Iniciar compressões",
+              "Iniciar ventilações de resgate",
+              "Aplicar DEA",
+              "Posição de recuperação"
+            ],
+            answer: 1
+          },
+          {
+            q: "O que significa Cianose?",
+            options: [
+              "Dor de cabeça",
+              "Coloração azulada da pele e mucosas",
+              "Aumento da frequência cardíaca",
+              "Dilatação das pupilas"
+            ],
+            answer: 1
+          },
+          {
+            q: "Função do exame secundário?",
+            options: [
+              "Identificar condições que ameaçam a vida",
+              "Identificar lesões da cabeça aos pés não encontradas no primário",
+              "Realizar triagem",
+              "Iniciar imobilização"
+            ],
+            answer: 1
+          },
+          {
+            q: "Uso correto do torniquete?",
+            options: [
+              "Primeiro método a tentar",
+              "Aplicar sobre articulação",
+              "Usar quando outros métodos falharam",
+              "Afrouxar a cada 10 minutos"
+            ],
+            answer: 2
+          },
+          {
+            q: "Posição para choque hipovolêmico?",
+            options: [
+              "Decúbito dorsal com pernas elevadas 25 cm",
+              "Sentada com pernas pendentes",
+              "Decúbito lateral direito",
+              "Decúbito ventral"
+            ],
+            answer: 0
+          },
+          {
+            q: "Abaulamento circular no para-brisa indica qual lesão?",
+            options: ["Torácica", "Lombar", "Cabeça e pescoço", "Membros inferiores"],
+            answer: 2
+          },
+          {
+            q: "Pulso radial palpável sugere PA sistólica de quanto?",
+            options: ["Inferior a 60 mmHg", "Superior a 80-90 mmHg", "Não se correlaciona", "Zero"],
+            answer: 1
+          },
+          {
+            q: "O que é Rota de Fuga em incidente Hazmat?",
+            options: [
+              "Caminho para curiosos",
+              "Caminho para entrar na área",
+              "Caminho pré-planejado para evacuação rápida",
+              "Local de tratamento de vítimas"
+            ],
+            answer: 2
+          },
+          {
+            q: "Conduta em queimadura de segundo grau com bolhas?",
+            options: [
+              "Estourar bolhas",
+              "Não estourar, cobrir com curativo seco e estéril",
+              "Passar gelo diretamente",
+              "Aplicar pomada antibiótica"
+            ],
+            answer: 1
+          },
+          {
+            q: "Ausência de reflexo de tosse em vítima inconsciente indica:",
+            options: [
+              "Via aérea pérvia",
+              "Proteção da via aérea",
+              "Risco de broncoaspiração",
+              "Hipoglicemia"
+            ],
+            answer: 2
+          },
+          {
+            q: "Quem decide interromper a RCP no pré-hospitalar?",
+            options: [
+              "Socorrista que iniciou",
+              "Chefe da equipe",
+              "Médico ou protocolo de óbito evidente",
+              "Familiar da vítima"
+            ],
+            answer: 2
+          },
+          {
+            q: "Para que serve a bandagem triangular?",
+            options: [
+              "Apenas fixar talas",
+              "Ocluir ferimentos abertos",
+              "Fixar curativos, imobilizar e apoiar segmentos",
+              "Apenas conter sangramentos"
+            ],
+            answer: 2
+          },
+          {
+            q: "Conduta em queimadura química por ácido nos olhos?",
+            options: [
+              "Aplicar colírio",
+              "Lavar abundantemente por 20 minutos, do centro para periferia",
+              "Secar e aplicar curativo oclusivo",
+              "Não fazer nada"
+            ],
+            answer: 1
+          },
+          {
+            q: "Vítima com cor Amarela no START significa:",
+            options: [
+              "Lesões fatais",
+              "Primeira prioridade",
+              "Pode andar, lesões leves",
+              "Grave mas estável, pode aguardar"
+            ],
+            answer: 3
+          },
+          {
+            q: "Vantagem do manguito como torniquete?",
+            options: [
+              "Mais doloroso",
+              "Controle preciso da pressão",
+              "Não pode ser usado no pré-hospitalar",
+              "Só funciona em membros inferiores"
+            ],
+            answer: 1
+          }
+        ];
+
+        // Embaralhar perguntas
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        shuffle(questions);
+
+        // Embaralhar alternativas
+        questions.forEach(q => {
+            const correct = q.options[q.answer];
+            shuffle(q.options);
+            q.answer = q.options.indexOf(correct);
+        });
+
+        let current = 0;
+        let answers = new Array(questions.length).fill(null);
+        let time = 600;
+        let timerInterval;
+
+        function updateTimer() {
+            let min = Math.floor(time / 60);
+            let sec = time % 60;
+            document.getElementById("timer").innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            updateTimer();
+            timerInterval = setInterval(() => {
+                if (time <= 0) {
+                    clearInterval(timerInterval);
+                    finish();
+                } else {
+                    time--;
+                    updateTimer();
+                }
+            }, 1000);
+        }
+
+        function load() {
+            let q = questions[current];
+            document.getElementById("question").innerHTML = `<strong>(${current+1}/${questions.length})</strong><br><br>${q.q}`;
+            let optionsHTML = "";
+            q.options.forEach((opt, i) => {
+                let selected = answers[current] === i ? "selected" : "";
+                optionsHTML += `<div class="option ${selected}" data-index="${i}">${opt}</div>`;
+            });
+            document.getElementById("options").innerHTML = optionsHTML;
+
+            document.querySelectorAll(".option").forEach(opt => {
+                opt.addEventListener("click", function() {
+                    const idx = parseInt(this.getAttribute("data-index"));
+                    answers[current] = idx;
+                    document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+                    this.classList.add("selected");
+                });
+            });
+        }
+
+        function next() {
+            if (answers[current] === null) {
+                alert("⚠️ Selecione uma resposta antes de continuar!");
+                return;
+            }
+            current++;
+            if (current >= questions.length) {
+                finish();
+            } else {
+                load();
+            }
+        }
+
+        function finish() {
+            clearInterval(timerInterval);
+            let score = 0;
+            questions.forEach((q, i) => {
+                if (answers[i] === q.answer) score++;
+            });
+            document.querySelector(".container").innerHTML = `
+                <h2>✅ RESULTADO FINAL</h2>
+                <p>Acertos: <span class="result-acertos">${score}</span> de ${questions.length}</p>
+                <p>📊 Porcentagem: <strong>${Math.round((score/questions.length)*100)}%</strong></p>
+                ${score === questions.length ? '<p style="color:green">🎉 PARABÉNS! NOTA MÁXIMA! 🎉</p>' : '<p>📚 Continue estudando e tente novamente!</p>'}
+                <button class="btn" onclick="location.reload()">🔄 REFAZER SIMULADO</button>
+            `;
+        }
+
+        startTimer();
+        load();
+        document.getElementById("nextBtn").addEventListener("click", next);
+    </script>
+</body>
+</html>
